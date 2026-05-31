@@ -12,7 +12,8 @@
     .card { background: #fff; border-radius: 10px; padding: 20px; max-width: 1100px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
     .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 16px; }
     label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; font-weight: 600; }
-    select, button { padding: 8px 12px; font-size: 0.95rem; border-radius: 6px; border: 1px solid #ccc; }
+    select, button, input[type="number"] { padding: 8px 12px; font-size: 0.95rem; border-radius: 6px; border: 1px solid #ccc; }
+    input[type="number"] { width: 5rem; }
     button { background: #2563eb; color: #fff; border: none; cursor: pointer; font-weight: 600; }
     button:disabled { opacity: 0.6; cursor: wait; }
     .links { display: none; gap: 12px; margin: 12px 0; }
@@ -27,7 +28,7 @@
 <body>
   <div class="card">
     <h1>Invoice Extractor</h1>
-    <p>Images from <code>data/images</code> (see constants.py). LLM runs only if fields are missing.</p>
+    <p>Images from <code>data/images</code> (batch1-0331 … 0331+). LLM runs only if fields are missing.</p>
 
     <div class="row">
       <label>OCR engine
@@ -35,6 +36,12 @@
           <option value="easyocr">EasyOCR — accurate, slower</option>
           <option value="tesseract">Tesseract — faster</option>
         </select>
+      </label>
+      <label>Records to process
+        <input type="number" id="limit" min="1" max="50" value="5" title="1–50, or check All below" />
+      </label>
+      <label style="flex-direction:row;align-items:center;gap:6px;font-weight:600;padding-bottom:8px">
+        <input type="checkbox" id="all" /> All in range (up to 50)
       </label>
       <label>
         <span>LLM if needed</span>
@@ -64,10 +71,22 @@
     const status = document.getElementById('status');
     const runBtn = document.getElementById('run');
     const links = document.getElementById('links');
+    const limitInput = document.getElementById('limit');
+    const allCheck = document.getElementById('all');
+
+    allCheck.onchange = () => {
+      limitInput.disabled = allCheck.checked;
+    };
+
+    fetch('/api/config').then(r => r.json()).then(cfg => {
+      limitInput.max = cfg.limit_max;
+      limitInput.value = cfg.limit_default;
+    }).catch(() => {});
 
     runBtn.onclick = async () => {
       runBtn.disabled = true;
-      status.textContent = 'Processing… (first run may take 1–2 min on CPU)';
+      const limit = allCheck.checked ? 50 : parseInt(limitInput.value, 10);
+      status.textContent = `Processing ${allCheck.checked ? 'all' : limit} invoice(s)… (may take several minutes)`;
       links.style.display = 'none';
       try {
         const res = await fetch('/api/process', {
@@ -76,6 +95,7 @@
           body: JSON.stringify({
             ocr_engine: document.getElementById('ocr').value,
             use_llm: document.getElementById('llm').value === 'true',
+            limit: limit,
           }),
         });
         const data = await res.json();

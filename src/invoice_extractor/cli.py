@@ -3,7 +3,7 @@ import logging
 import sys
 from pathlib import Path
 
-from invoice_extractor.constants import INPUT_DIR, OCR_ENGINE_DEFAULT
+from invoice_extractor.constants import IMAGE_LIMIT, IMAGE_MAX_RECORDS, INPUT_DIR, OCR_ENGINE_DEFAULT
 from invoice_extractor.pipeline import InvoicePipeline
 
 
@@ -14,8 +14,14 @@ def main(argv=None) -> int:
     p.add_argument("--ocr", choices=["easyocr", "tesseract"], default=OCR_ENGINE_DEFAULT)
     p.add_argument("--no-llm", action="store_true")
     p.add_argument("-i", "--input-dir", type=Path, default=INPUT_DIR)
+    p.add_argument("--limit", "-n", type=int, default=None,
+                   help=f"Number of images (1–{IMAGE_MAX_RECORDS}, 0=all in range)")
     p.add_argument("-v", action="store_true")
     args = p.parse_args(argv)
+
+    if args.limit is not None and (args.limit < 0 or args.limit > IMAGE_MAX_RECORDS):
+        logging.error("limit must be 0–%d", IMAGE_MAX_RECORDS)
+        return 1
 
     logging.basicConfig(level=logging.DEBUG if args.v else logging.INFO, format="%(message)s")
 
@@ -31,7 +37,7 @@ def main(argv=None) -> int:
         return 1
 
     results, warning = InvoicePipeline(ocr_engine=args.ocr, use_llm=not args.no_llm).run_batch(
-        args.input_dir, write_xlsx=args.excel
+        args.input_dir, write_xlsx=args.excel, limit=args.limit
     )
     if warning:
         logging.warning(warning)

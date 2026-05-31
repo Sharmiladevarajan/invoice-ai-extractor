@@ -8,7 +8,8 @@ ROOT = Path(__file__).resolve().parents[2]
 # Image batch (batch1-0331 … batch1-0381)
 IMAGE_FROM_ID = 331
 IMAGE_TO_ID = 381
-IMAGE_LIMIT = 5  # 0 = all in range
+IMAGE_LIMIT = 5  # 0 = all in range (CLI default; UI can override)
+IMAGE_MAX_RECORDS = 50  # max selectable in UI (batch1-0331 … batch1-0380)
 IMAGE_PATTERN = "batch1-*.jpg"
 
 INPUT_DIR = ROOT / "data" / "images"

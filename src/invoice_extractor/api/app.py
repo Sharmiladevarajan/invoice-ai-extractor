@@ -3,9 +3,18 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from invoice_extractor.constants import OUTPUT_CSV, OUTPUT_DIR, OUTPUT_XLSX, STATIC_DIR
+from invoice_extractor.constants import (
+    IMAGE_FROM_ID,
+    IMAGE_LIMIT,
+    IMAGE_MAX_RECORDS,
+    IMAGE_TO_ID,
+    OUTPUT_CSV,
+    OUTPUT_DIR,
+    OUTPUT_XLSX,
+    STATIC_DIR,
+)
 from invoice_extractor.models import CSV_COLUMNS
 from invoice_extractor.ocr import check_ocr_engine, tesseract_available
 from invoice_extractor.pipeline import InvoicePipeline
@@ -22,6 +31,17 @@ if STATIC_DIR.exists():
 class ProcessRequest(BaseModel):
     ocr_engine: str = "easyocr"
     use_llm: bool = True
+    limit: int = Field(default=IMAGE_LIMIT, ge=0, le=IMAGE_MAX_RECORDS)
+
+
+@app.get("/api/config")
+def config():
+    return {
+        "limit_default": IMAGE_LIMIT,
+        "limit_max": IMAGE_MAX_RECORDS,
+        "image_from_id": IMAGE_FROM_ID,
+        "image_to_id": IMAGE_TO_ID,
+    }
 
 
 @app.get("/favicon.ico")
@@ -55,7 +75,7 @@ def process(req: ProcessRequest):
     except ValueError as exc:
         raise HTTPException(400, str(exc)) from exc
 
-    results, warning = pipeline.run_batch(write_xlsx=True)
+    results, warning = pipeline.run_batch(write_xlsx=True, limit=req.limit)
     ok = [r for r in results if r.success]
     if not ok:
         detail = warning or "No images processed. Add files to data/images."
@@ -70,6 +90,7 @@ def process(req: ProcessRequest):
     return {
         "count": len(ok),
         "failed": len(results) - len(ok),
+        "limit": req.limit,
         "ocr_engine": req.ocr_engine,
         "rows": _last_results,
         "csv": str(OUTPUT_CSV),

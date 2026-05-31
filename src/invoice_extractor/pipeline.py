@@ -48,15 +48,18 @@ class InvoicePipeline:
                 error=str(exc),
             )
 
-    def process_directory(self, input_dir: Path | None = None) -> list[ProcessingResult]:
+    def process_directory(
+        self, input_dir: Path | None = None, limit: int | None = None
+    ) -> list[ProcessingResult]:
         folder = input_dir or INPUT_DIR
+        effective_limit = IMAGE_LIMIT if limit is None else limit
         images = sorted(folder.glob(IMAGE_PATTERN))
         if not images:
             images = sorted(
                 p for p in folder.rglob("*") if p.suffix.lower() in {".jpg", ".jpeg", ".png"}
             )
         images = select_images(
-            images, start_id=IMAGE_FROM_ID, end_id=IMAGE_TO_ID, limit=IMAGE_LIMIT
+            images, start_id=IMAGE_FROM_ID, end_id=IMAGE_TO_ID, limit=effective_limit
         )
         if not images:
             return []
@@ -65,9 +68,12 @@ class InvoicePipeline:
         return [self.process_image(p) for p in images]
 
     def run_batch(
-        self, input_dir: Path | None = None, write_xlsx: bool = True
+        self,
+        input_dir: Path | None = None,
+        write_xlsx: bool = True,
+        limit: int | None = None,
     ) -> tuple[list[ProcessingResult], str | None]:
-        results = self.process_directory(input_dir)
+        results = self.process_directory(input_dir, limit=limit)
         warning = None
         if not results:
             return [], warning
