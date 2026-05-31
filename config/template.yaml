@@ -1,0 +1,94 @@
+# Label patterns for the fixed-layout invoice template family.
+# Values are extracted relative to matched labels (same row / next row), not pixel coords.
+
+fields:
+  invoice_number:
+    labels:
+      - "invoice number"
+      - "invoice no"
+      - "invoice #"
+      - "invoice no."
+    value_pattern: '[A-Za-z0-9\-]+'
+
+  invoice_date:
+    labels:
+      - "invoice date"
+      - "date of issue"
+      - "issue date"
+    value_pattern: '\d{1,2}[./\-]\d{1,2}[./\-]\d{2,4}'
+
+  seller_name:
+    section: seller
+    labels:
+      - "seller"
+    skip_labels:
+      - "tax id"
+      - "iban"
+      - "address"
+
+  seller_tax_id:
+    section: seller
+    labels:
+      - "tax id"
+      - "tax id:"
+      - "vat id"
+    value_pattern: '[A-Za-z0-9\-]+'
+
+  client_name:
+    section: client
+    labels:
+      - "client"
+      - "buyer"
+      - "bill to"
+    skip_labels:
+      - "tax id"
+      - "iban"
+      - "address"
+
+  client_tax_id:
+    section: client
+    labels:
+      - "tax id"
+      - "tax id:"
+      - "vat id"
+    value_pattern: '[A-Za-z0-9\-]+'
+
+  net_worth:
+    labels:
+      - "total net worth"
+      - "net worth"
+      - "subtotal"
+      - "total net"
+    value_pattern: '[\$€£]?\s*[\d\s,\.]+\.?\d*'
+    prefer_summary: true
+
+  vat:
+    labels:
+      - "total vat"
+      - "vat amount"
+      - "tax"
+    value_pattern: '[\$€£]?\s*[\d\s,\.]+\.?\d*'
+    prefer_summary: true
+
+  gross_worth:
+    labels:
+      - "total gross worth"
+      - "gross worth"
+      - "total"
+      - "amount due"
+    value_pattern: '[\$€£]?\s*[\d\s,\.]+\.?\d*'
+    prefer_summary: true
+
+sections:
+  seller:
+    horizontal: left
+  client:
+    horizontal: right
+
+summary:
+  keywords:
+    - "summary"
+    - "total"
+    - "net worth"
+    - "gross worth"
+    - "vat"

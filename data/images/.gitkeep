@@ -1,0 +1,5 @@
+# Place invoice images here.
+# Expected path after Kaggle download:
+#   data/images/batch_1/batch_1/batch1_1/batch1-0331.jpg ... batch1-0381.jpg
+#
+# Or copy the 50 images directly into this folder.
